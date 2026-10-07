@@ -1,7 +1,20 @@
 using System.Globalization;
+using Microsoft.Extensions.DependencyInjection;
 
-var serviceCenter = new ExpertiseServiceCenter();
-var service = new Service(serviceCenter);
+/* Создаем список инструкций, какие обьекты контейнер должен уметь создавать*/
+var services = new ServiceCollection();
+
+/* Добавляем инструкцию, что если нужен ServiceCenter -> используется ExpertiseServiceCenter */
+services.AddSingleton<ServiceCenter, ExpertiseServiceCenter>();
+
+/* Добавляем сам Service */
+services.AddSingleton<Service>();
+
+/* Это наш DI-контейнер, который будет выполнять наши инструкции ( using var значит, что мы в конце выполнения программы этот контейнер освобождаем ) */
+using var provider = services.BuildServiceProvider();
+
+/* Просим DI-контейнер выдать Service */ 
+var service = provider.GetRequiredService<Service>();
 
 Console.WriteLine("ВышКат\n");
 
