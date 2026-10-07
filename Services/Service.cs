@@ -50,7 +50,7 @@ public class Service
         return result;
     }
 
-    double getTotalEnergyConsumption()
+    public double getTotalEnergyConsumption()
     {
         double totalEnergy = 0;
         foreach (Vehicle vehicle in vehicles)

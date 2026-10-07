@@ -1,4 +1,4 @@
-public class ChargingStation : Thing, EnergyConsumer
+public class ChargingStation : Thing, EnergyConsumption
 {
     public double DailyEnergyConsumption { get; }
 
