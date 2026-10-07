@@ -1,13 +1,12 @@
-public class Scooter : Vehicle, EnergyConsumption
+public class ChargingStation : Thing, EnergyConsumer
 {
     public double DailyEnergyConsumption { get; }
-    
-    public Scooter(
+
+    public ChargingStation(
         string name,
         string inventoryNumber,
-        int level,
         double dailyEnergyConsumption
-    ) : base(name, inventoryNumber, level)
+    ) : base(name, inventoryNumber)
     {
         DailyEnergyConsumption = dailyEnergyConsumption;
     }
