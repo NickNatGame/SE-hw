@@ -1,21 +1,25 @@
-public class Scooter : Vehicle, EnergyConsumption
+using CPO.Interfaces;
+
+namespace CPO.Domain;
+
+public class Scooter : Vehicle, IEnergyConsumption
 {
     public double DailyEnergyConsumption { get; }
-    
+
     public Scooter(
         string name,
         string inventoryNumber,
-        int level,
-        int condition, 
+        int beginnerEase,
+        int condition,
         bool brakesWork,
-        double dailyEnergyConsumption
-    ) : base(name, inventoryNumber, level, condition, brakesWork)
+        double dailyEnergyConsumption)
+        : base(name, inventoryNumber, beginnerEase, condition, brakesWork)
     {
-        DailyEnergyConsumption = dailyEnergyConsumption;
-    }
+        if (!double.IsFinite(dailyEnergyConsumption) || dailyEnergyConsumption < 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(dailyEnergyConsumption), "Расход энергии должен быть конечным неотрицательным числом");
+        }
 
-    public double GetDailyEnergyConsumption()
-    {
-        return DailyEnergyConsumption;
+        DailyEnergyConsumption = dailyEnergyConsumption;
     }
 }

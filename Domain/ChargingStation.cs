@@ -1,18 +1,22 @@
-public class ChargingStation : Thing, EnergyConsumption
+using CPO.Interfaces;
+
+namespace CPO.Domain;
+
+public class ChargingStation : Thing, IEnergyConsumption
 {
     public double DailyEnergyConsumption { get; }
 
     public ChargingStation(
         string name,
         string inventoryNumber,
-        double dailyEnergyConsumption
-    ) : base(name, inventoryNumber)
+        double dailyEnergyConsumption)
+        : base(name, inventoryNumber)
     {
-        DailyEnergyConsumption = dailyEnergyConsumption;
-    }
+        if (!double.IsFinite(dailyEnergyConsumption) || dailyEnergyConsumption < 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(dailyEnergyConsumption), "Расход энергии должен быть конечным неотрицательным числом");
+        }
 
-    public double GetDailyEnergyConsumption()
-    {
-        return DailyEnergyConsumption;
+        DailyEnergyConsumption = dailyEnergyConsumption;
     }
 }

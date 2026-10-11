@@ -1,35 +1,60 @@
+using CPO.Domain;
+using CPO.Interfaces;
+
+namespace CPO.Services;
+
 public class Service
 {
-    private List<Vehicle> vehicles;
-    private List<Thing> things;
-    private ServiceCenter serviceCenter;
+    private readonly List<Vehicle> _vehicles;
+    private readonly List<Thing> _things;
+    private readonly IServiceCenter _serviceCenter;
 
-    public Service(ServiceCenter serviceCenter)
+    public Service(IServiceCenter serviceCenter)
     {
-        this.serviceCenter = serviceCenter;
-        vehicles = new List<Vehicle>();
-        things = new List<Thing>();
+        if (serviceCenter == null)
+        {
+            throw new ArgumentNullException(nameof(serviceCenter));
+        }
+
+        _serviceCenter = serviceCenter;
+        _vehicles = new List<Vehicle>();
+        _things = new List<Thing>();
     }
 
-    public bool addVehicle(Vehicle vehicle)
+    public bool AddVehicle(Vehicle vehicle)
     {
-        if (!serviceCenter.Inspect(vehicle))
+        if (vehicle == null)
+        {
+            throw new ArgumentNullException(nameof(vehicle));
+        }
+
+        CheckInventoryNumber(vehicle.InventoryNumber);
+
+        if (!_serviceCenter.Inspect(vehicle))
         {
             return false;
         }
-        vehicles.Add(vehicle);
+
+        _vehicles.Add(vehicle);
         return true;
     }
+
     public void AddThing(Thing thing)
     {
-        things.Add(thing);
+        if (thing == null)
+        {
+            throw new ArgumentNullException(nameof(thing));
+        }
+
+        CheckInventoryNumber(thing.InventoryNumber);
+        _things.Add(thing);
     }
 
     public List<Vehicle> GetVehiclesForBeginners()
     {
-        var result = new List<Vehicle>();
+        List<Vehicle> result = new List<Vehicle>();
 
-        foreach (Vehicle vehicle in vehicles)
+        foreach (Vehicle vehicle in _vehicles)
         {
             if (vehicle.IsForBeginners())
             {
@@ -40,35 +65,48 @@ public class Service
         return result;
     }
 
-    public List<InventoryItem> GetInventory()
+    public List<IInventoryItem> GetInventory()
     {
-        var result = new List<InventoryItem>();
+        List<IInventoryItem> result = new List<IInventoryItem>();
 
-        result.AddRange(vehicles);
-        result.AddRange(things);
+        result.AddRange(_vehicles);
+        result.AddRange(_things);
 
         return result;
     }
 
-    public double getTotalEnergyConsumption()
+    public double GetTotalEnergyConsumption()
     {
         double totalEnergy = 0;
-        foreach (Vehicle vehicle in vehicles)
-        {
-            if (vehicle is EnergyConsumption item)
-            {
-                totalEnergy += item.GetDailyEnergyConsumption();
-            }
-        }
+        List<IInventoryItem> inventory = GetInventory();
 
-        foreach (Thing thing in things)
+        foreach (IInventoryItem item in inventory)
         {
-            if (thing is EnergyConsumption item)
+            if (item is IEnergyConsumption energyConsumer)
             {
-                totalEnergy += item.GetDailyEnergyConsumption();
+                totalEnergy += energyConsumer.DailyEnergyConsumption;
             }
         }
 
         return totalEnergy;
+    }
+
+    private void CheckInventoryNumber(string inventoryNumber)
+    {
+        foreach (Vehicle vehicle in _vehicles)
+        {
+            if (vehicle.InventoryNumber == inventoryNumber)
+            {
+                throw new InvalidOperationException($"ID '{inventoryNumber}' уже используется");
+            }
+        }
+
+        foreach (Thing thing in _things)
+        {
+            if (thing.InventoryNumber == inventoryNumber)
+            {
+                throw new InvalidOperationException($"ID '{inventoryNumber}' уже используется");
+            }
+        }
     }
 }

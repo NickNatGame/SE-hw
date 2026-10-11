@@ -1,7 +1,9 @@
+namespace CPO.Domain;
+
 public class Helmet : Thing
 {
-    public Helmet(string name, string inventoryNumber) : base(name, inventoryNumber)
+    public Helmet(string name, string inventoryNumber)
+        : base(name, inventoryNumber)
     {
-        
     }
 }
