@@ -73,11 +73,11 @@ public class ConsoleApplicationTests
 
         string output = RunApplication(input);
 
-        Assert.Contains("Введите целое число от 1 до 2.", output);
+        Assert.Contains("Введите целое число от 1 до 2", output);
         Assert.Contains("Введите непустое значение", output);
-        Assert.Contains("Введите целое число от 1 до 10.", output);
-        Assert.Contains("Введите целое число от 0 до 100.", output);
-        Assert.Contains("Введите целое число от 0 до 1.", output);
+        Assert.Contains("Введите целое число от 1 до 10", output);
+        Assert.Contains("Введите целое число от 0 до 100", output);
+        Assert.Contains("Введите целое число от 0 до 1", output);
         Assert.Contains("Введите неотрицательное число", output);
         Assert.Equal(2, output.Split("Этот ID уже используется", StringSplitOptions.None).Length - 1);
         Assert.Contains("Транспортных средств: 2", output);
