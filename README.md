@@ -28,7 +28,7 @@ dotnet run --project CPO.csproj
   зарядная станция и другой транспорт/вещи, которые требуют электроэнергии
 - `IServiceCenter`->  задаёт контракт техосмотра. `ExpertiseServiceCenter` принимает
   транспорт с состоянием не ниже 70 и исправными тормозами. Я выбрал именно такой алгоритм отбора транспорта,
-  но для enterprice уровня добавил заглушку, вместо которой можно добавить реальный модуль
+  а при необходимости его можно заменить другой реализацией `IServiceCenter`
 - `Service` -> управляет балансом и отчётами. Зависимость техосмотра передаётся
   через конструктор, а в `Program.cs` её собирает DI-контейнер
 
@@ -82,7 +82,11 @@ Stub задаёт решение независимо от состояния т
 `ExpertiseServiceCenterTests` фиксирует реальные правила на границах 69/70 и
 при неисправных тормозах. 
 Тесты `ServiceTests.GetVehiclesForBeginners_UsesEaseThreshold` и
-`ServiceTests.IsForBeginners_UsesEaseThreshold` фиксируют границу уровня для новичков 5/6.
+`DomainTests.IsForBeginners_UsesEaseThreshold` фиксируют границу уровня для новичков 5/6.
+
+Код тестов: [ServiceTests.cs](Tests/ServiceTests.cs),
+[DomainTests.cs](Tests/DomainTests.cs),
+[ExpertiseServiceCenterTests.cs](Tests/ExpertiseServiceCenterTests.cs).
 
 ## Проверка и покрытие
 
@@ -92,10 +96,12 @@ dotnet test Tests/CPO.Tests.csproj
 dotnet test Tests/CPO.Tests.csproj --collect:"XPlat Code Coverage" --results-directory ./TestResults
 ```
 
-Последняя команда создаёт `coverage.cobertura.xml`
+Последняя команда создаёт `coverage.cobertura.xml` в подпапке `TestResults`.
 Покрытие измеряется для всего приложения, включая консольную
 точку входа, без исключения доменных классов, сервисов или `Program.cs`
-Покрытие строк всего приложения = 98,81%, a покрытие доменных классов и сервисов = 100%
+При финальной проверке прошли все 46 тестовых случаев.
+Покрытие строк всего приложения = 98,81%,
+ветвей = 99,07%. Покрытие доменных классов и сервисов = 100%.
 
 ## Использование ИИ
 
