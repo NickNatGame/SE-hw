@@ -1,56 +1,89 @@
+using Microsoft.Extensions.DependencyInjection;
 using Pos.Application;
 using Pos.Domain;
 using Pos.Infrastructure;
+using Pos.Presentation;
 
-var students = new InMemoryStudentRepository();
-var rubrics = new InMemoryRubricRepository();
-var strategy = new WeightedScoreStrategy();
-var calculator = new FinalScoreCalculator(strategy);
-var grading = new GradingService(students, rubrics, calculator);
+namespace Pos;
 
-Student student = grading.AddStudent("Анна Иванова");
-Criterion homework = grading.AddCriterion("Домашние задания", maxScore: 10, weight: 70);
-Criterion project = grading.AddCriterion("Проект", maxScore: 20, weight: 30);
-
-grading.AddEvaluation(student.Id, homework.Id, 8);
-grading.AddEvaluation(student.Id, project.Id, 15);
-
-Console.WriteLine($"Студент: {student.Name}");
-foreach (Evaluation evaluation in grading.GetEvaluations(student.Id))
+public static class Program
 {
-    Criterion criterion = grading.GetCriterion(evaluation.CriterionId);
-    Console.WriteLine($"{criterion.Name}: {evaluation.Score}/{criterion.MaxScore} (вес: {criterion.Weight})");
+    public static void Main()
+    {
+        Console.WriteLine("ПОС - преподавательская оценка студентов");
+        Console.WriteLine("Данные хранятся в памяти до выхода. Итоги можно экспортировать в CSV.");
+        Console.WriteLine("1 - взвешенный итог, 2 - среднее долей выполнения (без весов)");
+        int? formula = ReadChoice("Формула: ", 1, 2);
+        if (formula == null)
+        {
+            return;
+        }
+
+        Console.WriteLine("0 - без округления; 1 - округление до сотых");
+        int? rounding = ReadChoice("Округление: ", 0, 1);
+        if (rounding == null)
+        {
+            return;
+        }
+
+        IFinalScoreStrategy strategy = new WeightedScoreStrategy();
+        if (formula == 2)
+        {
+            strategy = new AverageScoreStrategy();
+        }
+
+        using ServiceProvider provider = CreateProvider(strategy, rounding == 1, Console.In, Console.Out);
+        ConsoleApplication application = provider.GetRequiredService<ConsoleApplication>();
+        application.Run();
+    }
+
+    public static ServiceProvider CreateProvider(
+        IFinalScoreStrategy strategy, bool rounded, TextReader input, TextWriter output)
+    {
+        ArgumentNullException.ThrowIfNull(strategy);
+        ArgumentNullException.ThrowIfNull(input);
+        ArgumentNullException.ThrowIfNull(output);
+
+        ServiceCollection services = new ServiceCollection();
+        services.AddSingleton<IStudentRepository, InMemoryStudentRepository>();
+        services.AddSingleton<IRubricRepository, InMemoryRubricRepository>();
+        services.AddSingleton<IFinalScoreExporter, CsvFinalScoreExporter>();
+        services.AddSingleton<IFinalScoreStrategy>(strategy);
+        services.AddSingleton<FinalScoreCalculator>();
+        services.AddSingleton<IFinalScoreCalculator>(provider =>
+        {
+            IFinalScoreCalculator calculator = provider.GetRequiredService<FinalScoreCalculator>();
+            if (rounded)
+            {
+                calculator = new RoundedFinalScoreCalculator(calculator);
+            }
+
+            return calculator;
+        });
+        services.AddSingleton<GradingService>();
+        services.AddSingleton<TextReader>(input);
+        services.AddSingleton<TextWriter>(output);
+        services.AddSingleton<ConsoleApplication>();
+        return services.BuildServiceProvider();
+    }
+
+    private static int? ReadChoice(string prompt, int minimum, int maximum)
+    {
+        while (true)
+        {
+            Console.Write(prompt);
+            string? text = Console.ReadLine();
+            if (text == null)
+            {
+                return null;
+            }
+
+            if (int.TryParse(text, out int value) && value >= minimum && value <= maximum)
+            {
+                return value;
+            }
+
+            Console.WriteLine($"Введите целое число от {minimum} до {maximum}.");
+        }
+    }
 }
-decimal result = grading.CalculateFinalScore(student.Id);
-Console.WriteLine($"Итог: {result:0.##}/10");
-
-grading.CorrectEvaluation(student.Id, project.Id, 20);
-result = grading.CalculateFinalScore(student.Id);
-Console.WriteLine($"После исправления проекта: {result:0.##}/10");
-
-grading.CancelEvaluation(student.Id, project.Id);
-try
-{
-    result = grading.CalculateFinalScore(student.Id);
-    Console.WriteLine($"Итог: {result:0.##}/10");
-}
-catch (InvalidOperationException exception)
-{
-    Console.WriteLine(exception.Message);
-}
-
-grading.AddEvaluation(student.Id, project.Id, 15);
-result = grading.CalculateFinalScore(student.Id);
-Console.WriteLine($"После повторного выставления проекта: {result:0.##}/10");
-
-var averageCalculator = new FinalScoreCalculator(new AverageScoreStrategy());
-var averageGrading = new GradingService(students, rubrics, averageCalculator);
-
-var roundedCalculator = new RoundedFinalScoreCalculator(averageCalculator);
-var roundedGrading = new GradingService(students, rubrics, roundedCalculator);
-
-grading.CorrectEvaluation(student.Id, project.Id, 15.123m);
-decimal averageResult = averageGrading.CalculateFinalScore(student.Id);
-decimal roundedResult = roundedGrading.CalculateFinalScore(student.Id);
-Console.WriteLine($"Среднее долей выполнения без округления: {averageResult}/10");
-Console.WriteLine($"Среднее долей выполнения с округлением: {roundedResult}/10");

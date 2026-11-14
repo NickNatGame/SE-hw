@@ -7,16 +7,20 @@ public class GradingService
     private readonly IStudentRepository _students;
     private readonly IRubricRepository _rubrics;
     private readonly IFinalScoreCalculator _calculator;
+    private readonly IFinalScoreExporter _exporter;
 
-    public GradingService(IStudentRepository students, IRubricRepository rubrics, IFinalScoreCalculator calculator)
+    public GradingService(IStudentRepository students, IRubricRepository rubrics,
+        IFinalScoreCalculator calculator, IFinalScoreExporter exporter)
     {
         ArgumentNullException.ThrowIfNull(students);
         ArgumentNullException.ThrowIfNull(rubrics);
         ArgumentNullException.ThrowIfNull(calculator);
+        ArgumentNullException.ThrowIfNull(exporter);
 
         _students = students;
         _rubrics = rubrics;
         _calculator = calculator;
+        _exporter = exporter;
     }
 
     public Student AddStudent(string name)
@@ -82,5 +86,23 @@ public class GradingService
         Student student = _students.GetById(studentId);
         Rubric rubric = _rubrics.Get();
         return _calculator.Calculate(student, rubric);
+    }
+
+    public void ExportFinalScores(string path)
+    {
+        IReadOnlyList<Student> students = _students.GetAll();
+        if (students.Count == 0)
+        {
+            throw new InvalidOperationException("Нет студентов для экспорта.");
+        }
+
+        List<FinalScoreResult> results = new List<FinalScoreResult>();
+        foreach (Student student in students)
+        {
+            decimal score = CalculateFinalScore(student.Id);
+            results.Add(new FinalScoreResult(student.Id, student.Name, score));
+        }
+
+        _exporter.Export(path, results);
     }
 }

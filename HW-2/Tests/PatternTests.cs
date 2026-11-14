@@ -35,7 +35,8 @@ public class PatternTests
         GradingService grading = new GradingService(
             new InMemoryStudentRepository(),
             new InMemoryRubricRepository(),
-            CreateCalculator(average, rounded));
+            CreateCalculator(average, rounded),
+            new TestFinalScoreExporter());
         Student student = grading.AddStudent("Анна");
         Criterion homework = grading.AddCriterion("ДЗ", 10, 70);
         Criterion project = grading.AddCriterion("Проект", 20, 30);
