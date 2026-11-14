@@ -6,9 +6,9 @@ public class GradingService
 {
     private readonly IStudentRepository _students;
     private readonly IRubricRepository _rubrics;
-    private readonly FinalScoreCalculator _calculator;
+    private readonly IFinalScoreCalculator _calculator;
 
-    public GradingService(IStudentRepository students, IRubricRepository rubrics, FinalScoreCalculator calculator)
+    public GradingService(IStudentRepository students, IRubricRepository rubrics, IFinalScoreCalculator calculator)
     {
         ArgumentNullException.ThrowIfNull(students);
         ArgumentNullException.ThrowIfNull(rubrics);
@@ -43,6 +43,12 @@ public class GradingService
     {
         Rubric rubric = _rubrics.Get();
         return rubric.Criteria;
+    }
+
+    public Criterion GetCriterion(Guid criterionId)
+    {
+        Rubric rubric = _rubrics.Get();
+        return rubric.GetById(criterionId);
     }
 
     public void AddEvaluation(Guid studentId, Guid criterionId, decimal score)

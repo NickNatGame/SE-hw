@@ -36,7 +36,7 @@ public class Student
             }
         }
 
-        Evaluation newEvaluation = new Evaluation(this, rubric, criterionId, score);
+        Evaluation newEvaluation = Evaluation.Create(this, rubric, criterionId, score);
         _evaluations.Add(newEvaluation);
     }
 
@@ -45,7 +45,7 @@ public class Student
         ArgumentNullException.ThrowIfNull(rubric);
 
         int index = GetEvaluationIndex(criterionId);
-        Evaluation correctedEvaluation = new Evaluation(this, rubric, criterionId, score);
+        Evaluation correctedEvaluation = Evaluation.Create(this, rubric, criterionId, score);
         _evaluations[index] = correctedEvaluation;
     }
 

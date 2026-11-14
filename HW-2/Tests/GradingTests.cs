@@ -9,7 +9,7 @@ public class GradingTests
     private readonly GradingService _grading = new GradingService(
         new InMemoryStudentRepository(),
         new InMemoryRubricRepository(),
-        new FinalScoreCalculator());
+        new FinalScoreCalculator(new WeightedScoreStrategy()));
 
     [Fact]
     public void CompleteScenarioCalculatesCorrectsCancelsAndRestoresEvaluation()

@@ -6,7 +6,14 @@ public class Evaluation
     public Guid CriterionId { get; }
     public decimal Score { get; }
 
-    public Evaluation(Student student, Rubric rubric, Guid criterionId, decimal score)
+    private Evaluation(Guid studentId, Guid criterionId, decimal score)
+    {
+        StudentId = studentId;
+        CriterionId = criterionId;
+        Score = score;
+    }
+
+    public static Evaluation Create(Student student, Rubric rubric, Guid criterionId, decimal score)
     {
         ArgumentNullException.ThrowIfNull(student);
         ArgumentNullException.ThrowIfNull(rubric);
@@ -17,8 +24,6 @@ public class Evaluation
             throw new ArgumentOutOfRangeException(nameof(score), "Балл вне диапазона критерия.");
         }
 
-        StudentId = student.Id;
-        CriterionId = criterion.Id;
-        Score = score;
+        return new Evaluation(student.Id, criterion.Id, score);
     }
 }

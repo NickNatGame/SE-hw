@@ -4,7 +4,8 @@ using Pos.Infrastructure;
 
 var students = new InMemoryStudentRepository();
 var rubrics = new InMemoryRubricRepository();
-var calculator = new FinalScoreCalculator();
+var strategy = new WeightedScoreStrategy();
+var calculator = new FinalScoreCalculator(strategy);
 var grading = new GradingService(students, rubrics, calculator);
 
 Student student = grading.AddStudent("Анна Иванова");
@@ -17,7 +18,7 @@ grading.AddEvaluation(student.Id, project.Id, 15);
 Console.WriteLine($"Студент: {student.Name}");
 foreach (Evaluation evaluation in grading.GetEvaluations(student.Id))
 {
-    Criterion criterion = rubrics.Get().GetById(evaluation.CriterionId);
+    Criterion criterion = grading.GetCriterion(evaluation.CriterionId);
     Console.WriteLine($"{criterion.Name}: {evaluation.Score}/{criterion.MaxScore} (вес: {criterion.Weight})");
 }
 decimal result = grading.CalculateFinalScore(student.Id);
@@ -41,3 +42,15 @@ catch (InvalidOperationException exception)
 grading.AddEvaluation(student.Id, project.Id, 15);
 result = grading.CalculateFinalScore(student.Id);
 Console.WriteLine($"После повторного выставления проекта: {result:0.##}/10");
+
+var averageCalculator = new FinalScoreCalculator(new AverageScoreStrategy());
+var averageGrading = new GradingService(students, rubrics, averageCalculator);
+
+var roundedCalculator = new RoundedFinalScoreCalculator(averageCalculator);
+var roundedGrading = new GradingService(students, rubrics, roundedCalculator);
+
+grading.CorrectEvaluation(student.Id, project.Id, 15.123m);
+decimal averageResult = averageGrading.CalculateFinalScore(student.Id);
+decimal roundedResult = roundedGrading.CalculateFinalScore(student.Id);
+Console.WriteLine($"Среднее долей выполнения без округления: {averageResult}/10");
+Console.WriteLine($"Среднее долей выполнения с округлением: {roundedResult}/10");
