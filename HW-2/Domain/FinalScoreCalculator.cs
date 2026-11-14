@@ -31,7 +31,7 @@ public class FinalScoreCalculator : IFinalScoreCalculator
             if (!studentEvaluations.ContainsKey(criterion.Id))
             {
                 throw new InvalidOperationException(
-                    $"Нельзя рассчитать итог: не выставлена оценка по критерию «{criterion.Name}».");
+                    $"Нельзя рассчитать итог: у студента «{student.Name}» не выставлена оценка по критерию «{criterion.Name}».");
             }
         }
 

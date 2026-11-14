@@ -85,7 +85,10 @@ public class ConsoleAndExportTests : IDisposable
         Criterion criterion = grading.AddCriterion("ДЗ", 10, 1);
         grading.AddEvaluation(first.Id, criterion.Id, 8);
 
-        Assert.Throws<InvalidOperationException>(() => grading.ExportFinalScores("results.csv"));
+        InvalidOperationException exception = Assert.Throws<InvalidOperationException>(
+            () => grading.ExportFinalScores("results.csv"));
+        Assert.Contains($"у студента «{second.Name}»", exception.Message);
+        Assert.Contains($"по критерию «{criterion.Name}»", exception.Message);
         Assert.False(exporter.Called);
 
         grading.AddEvaluation(second.Id, criterion.Id, 0);
