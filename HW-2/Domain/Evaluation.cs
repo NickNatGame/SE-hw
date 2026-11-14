@@ -12,8 +12,10 @@ public class Evaluation
         ArgumentNullException.ThrowIfNull(rubric);
 
         Criterion criterion = rubric.GetById(criterionId);
-        if (score < 0 || score > criterion.MaxScore)
+        if (!criterion.Range.Contains(score))
+        {
             throw new ArgumentOutOfRangeException(nameof(score), "Балл вне диапазона критерия.");
+        }
 
         StudentId = student.Id;
         CriterionId = criterion.Id;

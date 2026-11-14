@@ -2,22 +2,40 @@ namespace Pos.Domain;
 
 public class Rubric
 {
-    private readonly List<Criterion> _criteria = new();
+    private readonly List<Criterion> _criteria = new List<Criterion>();
 
-    public IReadOnlyList<Criterion> Criteria => _criteria.AsReadOnly();
+    public IReadOnlyList<Criterion> Criteria
+    {
+        get
+        {
+            return _criteria.AsReadOnly();
+        }
+    }
 
     public void Add(Criterion criterion)
     {
         ArgumentNullException.ThrowIfNull(criterion);
-        if (_criteria.Any(existing => existing.Id == criterion.Id))
-            throw new InvalidOperationException("Критерий уже добавлен.");
+        foreach (Criterion existing in _criteria)
+        {
+            if (existing.Id == criterion.Id)
+            {
+                throw new InvalidOperationException("Критерий уже добавлен.");
+            }
+        }
 
         _criteria.Add(criterion);
     }
 
     public Criterion GetById(Guid id)
     {
-        return _criteria.FirstOrDefault(criterion => criterion.Id == id)
-            ?? throw new ArgumentException("Критерий отсутствует в рубрикаторе.", nameof(id));
+        foreach (Criterion criterion in _criteria)
+        {
+            if (criterion.Id == id)
+            {
+                return criterion;
+            }
+        }
+
+        throw new ArgumentException("Критерий отсутствует в рубрикаторе.", nameof(id));
     }
 }

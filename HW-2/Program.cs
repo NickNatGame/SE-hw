@@ -1,27 +1,43 @@
+using Pos.Application;
 using Pos.Domain;
+using Pos.Infrastructure;
 
-// Пока это только демонстрация: данные создаются в коде и хранятся в памяти.
-var student = new Student("Анна Иванова");
-var homework = new Criterion("Домашние задания", maxScore: 10, weight: 70);
-var project = new Criterion("Проект", maxScore: 20, weight: 30);
-
-var rubric = new Rubric();
-rubric.Add(homework);
-rubric.Add(project);
-
-var evaluations = new List<Evaluation>
-{
-    new(student, rubric, homework.Id, 8),
-    new(student, rubric, project.Id, 15)
-};
-
+var students = new InMemoryStudentRepository();
+var rubrics = new InMemoryRubricRepository();
 var calculator = new FinalScoreCalculator();
-decimal result = calculator.Calculate(student, rubric, evaluations);
+var grading = new GradingService(students, rubrics, calculator);
+
+Student student = grading.AddStudent("Анна Иванова");
+Criterion homework = grading.AddCriterion("Домашние задания", maxScore: 10, weight: 70);
+Criterion project = grading.AddCriterion("Проект", maxScore: 20, weight: 30);
+
+grading.AddEvaluation(student.Id, homework.Id, 8);
+grading.AddEvaluation(student.Id, project.Id, 15);
 
 Console.WriteLine($"Студент: {student.Name}");
-foreach (Evaluation evaluation in evaluations)
+foreach (Evaluation evaluation in grading.GetEvaluations(student.Id))
 {
-    Criterion criterion = rubric.GetById(evaluation.CriterionId);
+    Criterion criterion = rubrics.Get().GetById(evaluation.CriterionId);
     Console.WriteLine($"{criterion.Name}: {evaluation.Score}/{criterion.MaxScore} (вес: {criterion.Weight})");
 }
+decimal result = grading.CalculateFinalScore(student.Id);
 Console.WriteLine($"Итог: {result:0.##}/10");
+
+grading.CorrectEvaluation(student.Id, project.Id, 20);
+result = grading.CalculateFinalScore(student.Id);
+Console.WriteLine($"После исправления проекта: {result:0.##}/10");
+
+grading.CancelEvaluation(student.Id, project.Id);
+try
+{
+    result = grading.CalculateFinalScore(student.Id);
+    Console.WriteLine($"Итог: {result:0.##}/10");
+}
+catch (InvalidOperationException exception)
+{
+    Console.WriteLine(exception.Message);
+}
+
+grading.AddEvaluation(student.Id, project.Id, 15);
+result = grading.CalculateFinalScore(student.Id);
+Console.WriteLine($"После повторного выставления проекта: {result:0.##}/10");

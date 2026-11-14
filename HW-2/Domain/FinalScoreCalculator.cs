@@ -2,28 +2,40 @@ namespace Pos.Domain;
 
 public class FinalScoreCalculator
 {
-    // Отсутствующая оценка считается нулём; результат выражен по 10-балльной шкале.
-    public decimal Calculate(Student student, Rubric rubric, IEnumerable<Evaluation> evaluations)
+    public decimal Calculate(Student student, Rubric rubric)
     {
         ArgumentNullException.ThrowIfNull(student);
         ArgumentNullException.ThrowIfNull(rubric);
-        ArgumentNullException.ThrowIfNull(evaluations);
 
         if (rubric.Criteria.Count == 0)
+        {
             throw new InvalidOperationException("Нельзя рассчитать итог без критериев.");
+        }
 
-        var studentEvaluations = evaluations.Where(evaluation => evaluation.StudentId == student.Id)
-            .ToDictionary(evaluation => evaluation.CriterionId);
+        var studentEvaluations = new Dictionary<Guid, Evaluation>();
+        foreach (Evaluation evaluation in student.Evaluations)
+        {
+            studentEvaluations.Add(evaluation.CriterionId, evaluation);
+        }
+
         decimal weightedSum = 0;
         decimal totalWeight = 0;
 
         foreach (Criterion criterion in rubric.Criteria)
         {
-            studentEvaluations.TryGetValue(criterion.Id, out Evaluation? evaluation);
-            weightedSum += (evaluation?.Score ?? 0) / criterion.MaxScore * criterion.Weight;
+            if (!studentEvaluations.TryGetValue(criterion.Id, out Evaluation? evaluation))
+            {
+                throw new InvalidOperationException(
+                    $"Нельзя рассчитать итог: не выставлена оценка по критерию «{criterion.Name}».");
+            }
+
+            decimal score = evaluation.Score;
+            decimal contribution = score / criterion.MaxScore * criterion.Weight;
+
+            weightedSum += contribution;
             totalWeight += criterion.Weight;
         }
 
-        return 10 * weightedSum / totalWeight;
+        return weightedSum / totalWeight * 10;
     }
 }
