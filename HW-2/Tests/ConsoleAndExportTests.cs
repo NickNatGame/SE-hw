@@ -10,6 +10,37 @@ public class ConsoleAndExportTests : IDisposable
 {
     private readonly string _directory = Directory.CreateTempSubdirectory("pos-tests-").FullName;
 
+    [Fact]
+    public void DemoRunsWithoutInputAndExportsRestoredEvaluations()
+    {
+        using StringReader input = new StringReader("");
+        using StringWriter output = new StringWriter();
+        using ServiceProvider provider = Program.CreateProvider(new WeightedScoreStrategy(), false, input, output);
+        provider.GetRequiredService<ConsoleApplication>().RunDemo();
+
+        string text = output.ToString();
+        string prefix = "Итоги экспортированы: ";
+        string exportLine = Assert.Single(text.Split('\n'), line => line.StartsWith(prefix));
+        string path = exportLine.Substring(prefix.Length).Trim();
+        try
+        {
+            string normalized = text.Replace(',', '.');
+            Assert.Contains("Начальный итог: 7.85/10", normalized);
+            Assert.Contains("После исправления проекта с 15 на 20: 8.6/10", normalized);
+            Assert.Contains("Ожидаемый отказ:", text);
+            Assert.Contains("у студента «Никита Пичурин»", text);
+            Assert.Contains("по критерию «Проект»", text);
+            Assert.Contains("После повторного выставления проекта: 7.85/10", normalized);
+            Assert.Contains(";\"Никита Пичурин\";7.85", File.ReadAllText(path));
+            Assert.Equal(2, provider.GetRequiredService<GradingService>().GetEvaluations(
+                provider.GetRequiredService<GradingService>().GetStudents()[0].Id).Count);
+        }
+        finally
+        {
+            File.Delete(path);
+        }
+    }
+
     [Theory]
     [InlineData(false, false, "7.85")]
     [InlineData(false, true, "7.85")]

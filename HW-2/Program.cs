@@ -8,8 +8,16 @@ namespace Pos;
 
 public static class Program
 {
-    public static void Main()
+    public static void Main(string[] args)
     {
+        if (args.Length == 1 && args[0] == "--demo")
+        {
+            using ServiceProvider demoProvider = CreateProvider(
+                new WeightedScoreStrategy(), false, Console.In, Console.Out);
+            demoProvider.GetRequiredService<ConsoleApplication>().RunDemo();
+            return;
+        }
+
         Console.WriteLine("ПОС - преподавательская оценка студентов");
         Console.WriteLine("Данные хранятся в памяти до выхода. Итоги можно экспортировать в CSV.");
         Console.WriteLine("1 - взвешенный итог, 2 - среднее долей выполнения (без весов)");

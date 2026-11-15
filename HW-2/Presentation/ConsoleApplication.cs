@@ -20,6 +20,60 @@ public class ConsoleApplication
         _output = output;
     }
 
+    public void RunDemo()
+    {
+        _output.WriteLine("Демо: взвешенный итог без округления, сценарий из README.");
+        Student student = _grading.AddStudent("Никита Пичурин");
+        Criterion homework = _grading.AddCriterion("ДЗ", 10, 70);
+        Criterion project = _grading.AddCriterion("Проект", 20, 30);
+        _grading.AddEvaluation(student.Id, homework.Id, 8);
+        _grading.AddEvaluation(student.Id, project.Id, 15);
+        ShowStudents();
+        ShowCriteria();
+        foreach (Evaluation evaluation in _grading.GetEvaluations(student.Id))
+        {
+            Criterion criterion = _grading.GetCriterion(evaluation.CriterionId);
+            _output.WriteLine($"{criterion.Name}: {evaluation.Score}/{criterion.MaxScore}");
+        }
+
+        decimal result = _grading.CalculateFinalScore(student.Id);
+        _output.WriteLine($"Начальный итог: {result:G29}/10");
+
+        _grading.CorrectEvaluation(student.Id, project.Id, 20);
+        result = _grading.CalculateFinalScore(student.Id);
+        _output.WriteLine($"После исправления проекта с 15 на 20: {result:G29}/10");
+
+        _grading.CancelEvaluation(student.Id, project.Id);
+        _output.WriteLine("Оценка за проект отменена.");
+        try
+        {
+            _grading.CalculateFinalScore(student.Id);
+        }
+        catch (InvalidOperationException exception)
+        {
+            _output.WriteLine($"Ожидаемый отказ: {exception.Message}");
+        }
+
+        _grading.AddEvaluation(student.Id, project.Id, 15);
+        result = _grading.CalculateFinalScore(student.Id);
+        _output.WriteLine($"После повторного выставления проекта: {result:G29}/10");
+
+        string path = Path.Combine(Path.GetTempPath(), $"pos-demo-{Guid.NewGuid():N}.csv");
+        try
+        {
+            _grading.ExportFinalScores(path);
+            _output.WriteLine($"Итоги экспортированы: {path}");
+        }
+        catch (IOException exception)
+        {
+            _output.WriteLine($"Ошибка файла: {exception.Message}");
+        }
+        catch (UnauthorizedAccessException exception)
+        {
+            _output.WriteLine($"Нет доступа к файлу: {exception.Message}");
+        }
+    }
+
     public void Run()
     {
         while (true)
